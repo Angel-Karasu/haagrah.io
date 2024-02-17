@@ -4,13 +4,15 @@ from random import randint
 
 pygame.init()
 pygame.display.set_caption('Haagrah.io')
-icon = pygame.image.load('src/icon.png')
-pygame.display.set_icon(icon)
+pygame.display.set_icon(pygame.image.load('src/icon.png'))
 pygame.mixer.music.load('src/haagrah_song.mp3')
 pygame.mixer.music.play()
 
-window_size = (1000, 750)
-window = pygame.display.set_mode(window_size)
+WIN_SIZE = (1000, 750)
+WINDOW = pygame.display.set_mode(WIN_SIZE)
+
+NB_NPCS = 5
+NB_PARTICLES = 250
 
 class Background:
     def __init__(self):
@@ -44,7 +46,7 @@ class Background:
 
         npcs.extend(Npc() for _ in range(5))
 
-    def show(self): window.blit(self.img, (0,-125))
+    def show(self): WINDOW.blit(self.img, (0,-125))
 
 class Player:
     def __init__(self):
@@ -86,20 +88,20 @@ class Player:
     def show(self):
         self.change_img_size()
         self.create_hitbox()
-        window.blit(self.img_size, tuple(self.pos))
+        WINDOW.blit(self.img_size, tuple(self.pos))
 
 class Particle:
     def __init__(self):
-        self.pos = (randint(0, window_size[0]), randint(0, window_size[1]))
+        self.pos = (randint(0, WIN_SIZE[0]), randint(0, WIN_SIZE[1]))
         self.color = (255, 0, 0)
         self.size = randint(2,10)
         self.show()
 
-    def show(self): pygame.draw.circle(window, self.color, self.pos, self.size)
+    def show(self): pygame.draw.circle(WINDOW, self.color, self.pos, self.size)
 
 class Npc:
     def __init__(self):
-        self.pos = (randint(20, window_size[0]-20), randint(20, window_size[0]-20))
+        self.pos = (randint(20, WIN_SIZE[0]-20), randint(20, WIN_SIZE[0]-20))
         self.size = 50
         self.color = (randint(0,255), randint(0,255), randint(0,255))
         self.target = None
@@ -146,13 +148,13 @@ class Npc:
 
     def show(self):
         self.create_hitbox()
-        pygame.draw.circle(window, self.color, self.pos, self.size)
+        pygame.draw.circle(WINDOW, self.color, self.pos, self.size)
 
 
 background = Background()
 player = Player()
-particles = [Particle() for _ in range(250)]
-npcs = [Npc() for _ in range(5)]
+particles = [Particle() for _ in range(NB_PARTICLES)]
+npcs = [Npc() for _ in range(NB_NPCS)]
 
 isPlaying = True
 while isPlaying:
@@ -167,7 +169,7 @@ while isPlaying:
     player.eat(npcs)
     player.show()
 
-    if len(particles) <= len(npcs): particles.extend(Particle() for _ in range(5))
+    if len(particles) <= len(npcs): particles.extend(Particle() for _ in range(len(npcs)))
 
     sizes = [player.size//2]
     for npc in npcs:
@@ -179,7 +181,7 @@ while isPlaying:
         
         sizes.append(npc.size)
 
-    if max(sizes) > window_size[1]/4 and background.zoom > 1: background.unzoom(player, npcs, particles)
+    if max(sizes) > WIN_SIZE[1]/4 and background.zoom > 1: background.unzoom(player, npcs, particles)
 
     pygame.time.delay(7)
     pygame.display.flip()
