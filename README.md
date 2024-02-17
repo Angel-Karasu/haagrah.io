@@ -8,7 +8,7 @@ If you want to play, clone this repository, install all requirements packages an
 ```shell
 git clone https://github.com/Angel-Karasu/haagrah.io.git;
 cd haagrah.io;
-pip install -r requirements.txt
+pip install -r requirements.txt;
 python ./main.py;
 ```
 
