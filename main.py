@@ -4,9 +4,9 @@ from random import randint
 
 pygame.init()
 pygame.display.set_caption('Haagrah.io')
-icon = pygame.image.load('icon.png')
+icon = pygame.image.load('src/icon.png')
 pygame.display.set_icon(icon)
-pygame.mixer.music.load('haagrah_song.mp3')
+pygame.mixer.music.load('src/haagrah_song.mp3')
 pygame.mixer.music.play()
 
 window_size = (1000, 750)
@@ -14,7 +14,7 @@ window = pygame.display.set_mode(window_size)
 
 class Background:
     def __init__(self):
-        img = pygame.image.load('background.png')
+        img = pygame.image.load('src/background.png')
         self.original_img = img
         self.zoom = 8
         self.modify_img()
@@ -48,7 +48,7 @@ class Background:
 
 class Player:
     def __init__(self):
-        img = pygame.image.load('JP_Zadi.png')
+        img = pygame.image.load('src/JP_Zadi.png')
         self.img = img
         self.size = 100
         self.pos = [10, 10]
