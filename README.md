@@ -4,10 +4,11 @@ This is a simple project to parody Agar.io game.
     
 ## Installation
 
-If you want to play, clone this repository and run it using python command
+If you want to play, clone this repository, install all requirements packages and run it using python command
 ```shell
 git clone https://github.com/Angel-Karasu/haagrah.io.git;
 cd haagrah.io;
+pip install -r requirements.txt
 python ./main.py;
 ```
 
