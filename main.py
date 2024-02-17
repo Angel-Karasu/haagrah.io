@@ -2,219 +2,184 @@ import math, pygame
 from pygame.locals import *
 from random import randint
 
-class Musique: # ajoute son au jeu
-    def __init__(self):
-        self.musique = pygame.mixer.music.load('Haagrah.io.mp3')
-    
-    def jouerSon(self):
-        try: pygame.mixer.music.play()
-        except: pass
-
-"""initialise pygame"""
 pygame.init()
 pygame.display.set_caption('Haagrah.io')
-icon = pygame.image.load('Haagrah.io.png')
+icon = pygame.image.load('icon.png')
 pygame.display.set_icon(icon)
-musique = Musique()
-musique.jouerSon()
+pygame.mixer.music.load('haagrah_song.mp3')
+pygame.mixer.music.play()
 
-fenTaille = (1000, 750)
-fenetre = pygame.display.set_mode(fenTaille)
-""""""
+window_size = (1000, 750)
+window = pygame.display.set_mode(window_size)
 
-# permet de zoomer et dezoomer la map pour la rendre plus grande
-class Fond:
+class Background:
     def __init__(self):
         img = pygame.image.load('background.png')
-        self.originalImg = img
+        self.original_img = img
         self.zoom = 8
-        self.modifierImg()
+        self.modify_img()
 
-    # modifie la taille de l'img en fond afin d'ajuster le zoom
-    def modifierImg(self):
-        self.taille = self.originalImg.get_rect()[3]*self.zoom
-        self.img = pygame.transform.scale(self.originalImg, (self.taille, self.taille))
+    def modify_img(self):
+        self.size = self.original_img.get_rect()[3]*self.zoom
+        self.img = pygame.transform.scale(self.original_img, (self.size, self.size))
 
-    # dezoom logicielement la map afin de donner l'illusion d'un grande map
-    def dezoom(self, joueur, ordinateurs, particules):
+    def unzoom(self, player, npcs, particles):
         self.zoom //= 2
-        self.modifierImg()
-        self.afficher()
+        self.modify_img()
+        self.show()
 
-        joueur.taille //= 3
-        joueur.pos = [joueur.pos[0]//2, joueur.pos[1]//2]
-        joueur.afficher()
+        player.size //= 3
+        player.pos = [player.pos[0]//2, player.pos[1]//2]
+        player.show()
 
-        for ordi in ordinateurs:
-            ordi.taille //= 3
-            ordi.pos = (ordi.pos[0]//2, ordi.pos[1]//2)
-            ordi.afficher()
+        for npc in npcs:
+            npc.size //= 3
+            npc.pos = (npc.pos[0]//2, npc.pos[1]//2)
+            npc.show()
 
-        particules.extend(Particule() for _ in range(250))
-        for prtcl in particules:
-            prtcl.taille //= 3
-            prtcl.afficher()
+        particles.extend(Particle() for _ in range(250))
+        for prtcl in particles:
+            prtcl.size //= 3
+            prtcl.show()
 
-        ordinateurs.extend(Ordinateur() for _ in range(5))
+        npcs.extend(Npc() for _ in range(5))
 
-    def afficher(self): fenetre.blit(self.img, (0,-125)) # ajoute un fond
+    def show(self): window.blit(self.img, (0,-125))
 
-class Joueur:
+class Player:
     def __init__(self):
         img = pygame.image.load('JP_Zadi.png')
         self.img = img
-        self.taille = 100
+        self.size = 100
         self.pos = [10, 10]
-        self.changerTailleImg()
+        self.change_img_size()
 
-    # determine la taille du personnage graphiquement
-    def changerTailleImg(self): self.tailleImg = pygame.transform.scale(self.img, (self.taille, self.taille))
+    def change_img_size(self): self.img_size = pygame.transform.scale(self.img, (self.size, self.size))
 
-    # genere la boite de collision du joueur
-    def genereHitbox(self):
-        self.hitboxTaille = (self.taille//2)*(math.cos(math.pi/4))*2    # creer la hitbox du perso
-        self.hitboxPos = tuple(pos + (self.taille - self.hitboxTaille)//2 for pos in self.pos)
+    def create_hitbox(self):
+        self.hitbox_size = (self.size//2)*(math.cos(math.pi/4))*2 
+        self.hitbox_pos = tuple(pos + (self.size - self.hitbox_size)//2 for pos in self.pos)
 
-    # affiche la hitbox
-    def afficherHitbox(self):
-        pygame.draw.rect(fenetre, (20,255,20), pygame.Rect(
-            ( self.hitboxPos[0], self.hitboxPos[1], self.hitboxTaille, self.hitboxTaille )
-        ))
+    def move(self):
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT]: self.pos[0] -= 1
+        elif key[pygame.K_RIGHT]: self.pos[0] += 1
 
-    # permet de deplacer le joueur avec des fleches
-    def deplacer(self):
-        touche = pygame.key.get_pressed()
-        if touche[pygame.K_LEFT]: self.pos[0] -= 1
-        elif touche[pygame.K_RIGHT]: self.pos[0] += 1
+        if key[pygame.K_UP]: self.pos[1] -= 1
+        elif key[pygame.K_DOWN]: self.pos[1] += 1
+        self.create_hitbox()
 
-        if touche[pygame.K_UP]: self.pos[1] -= 1
-        elif touche[pygame.K_DOWN]: self.pos[1] += 1
-        self.genereHitbox()
+    def eat(self, foods):
+        for food in foods:
+            if (self.hitbox_pos[0] <= food.pos[0] <= self.hitbox_pos[0] + self.hitbox_size and
+                self.hitbox_pos[1] <= food.pos[1] <= self.hitbox_pos[1] + self.hitbox_size and
+                self.size/2 > food.size ):
 
-    # permet de verifier si une entité se situe dans notre hitbox pour la manger
-    def manger(self, bouffes):
-        for bouffe in bouffes:
-            if (self.hitboxPos[0] <= bouffe.pos[0] <= self.hitboxPos[0] + self.hitboxTaille and
-                self.hitboxPos[1] <= bouffe.pos[1] <= self.hitboxPos[1] + self.hitboxTaille and
-                self.taille/2 > bouffe.taille ):
+                self.size += food.size
+                self.pos = [pos-food.size//2 for pos in self.pos]
+                if type(food) == Npc: pygame.mixer.music.play()
+                foods.remove(food)
+                self.change_img_size()
 
-                self.taille += bouffe.taille
-                self.pos = [pos-bouffe.taille//2 for pos in self.pos]  # fait grandir le perso depuis son centre
-                if bouffe.taille >= 50: musique.jouerSon() # joue un cri de la victoire quand on vainc une proie
-                bouffes.remove(bouffe)
-                self.changerTailleImg()
+            else: food.show()
 
-            else: bouffe.afficher()
+    def show(self):
+        self.change_img_size()
+        self.create_hitbox()
+        window.blit(self.img_size, tuple(self.pos))
 
-    # affiche le joueur
-    def afficher(self):
-        self.changerTailleImg()
-        self.genereHitbox()
-        fenetre.blit(self.tailleImg, tuple(self.pos))
-
-class Particule:
+class Particle:
     def __init__(self):
-        self.pos = (randint(0, fenTaille[0]), randint(0, fenTaille[1]))
-        self.couleur = (255, 0, 0)
-        self.taille = randint(2,10)
-        self.afficher()
+        self.pos = (randint(0, window_size[0]), randint(0, window_size[1]))
+        self.color = (255, 0, 0)
+        self.size = randint(2,10)
+        self.show()
 
-    # affiche les particules
-    def afficher(self): pygame.draw.circle(fenetre, self.couleur, self.pos, self.taille)
+    def show(self): pygame.draw.circle(window, self.color, self.pos, self.size)
 
-class Ordinateur:
+class Npc:
     def __init__(self):
-        self.pos = (randint(20, fenTaille[0]-20), randint(20, fenTaille[0]-20))
-        self.taille = 50
-        self.couleur = (randint(0,255), randint(0,255), randint(0,255))
-        self.cible = None
-        self.afficher()
+        self.pos = (randint(20, window_size[0]-20), randint(20, window_size[0]-20))
+        self.size = 50
+        self.color = (randint(0,255), randint(0,255), randint(0,255))
+        self.target = None
+        self.show()
 
-    def genereHitbox(self):
-        self.hitboxTaille = (self.taille)*(math.cos(math.pi/4))*2    # creer la hitbox de l'ordi
-        self.hitboxPos = tuple(pos - self.hitboxTaille//2 for pos in self.pos)
+    def create_hitbox(self):
+        self.hitbox_size = (self.size)*(math.cos(math.pi/4))*2
+        self.hitbox_pos = tuple(pos - self.hitbox_size//2 for pos in self.pos)
 
-    # affiche la hitbox
-    def afficherHitbox(self):
-        pygame.draw.rect(fenetre, (20,255,20), pygame.Rect(
-            ( self.hitboxPos[0], self.hitboxPos[1], self.hitboxTaille, self.hitboxTaille )
-        ))
-
-    # fait suivre le bot un axex vers une particule afin qu'il puisse grandir
-    def deplacer(self):
-        if self.cible not in particules: self.cible = particules[randint(0, len(particules)-1)]
-        self.cible.couleur = self.couleur
-        coord = (self.pos[0]-self.cible.pos[0], self.pos[1]-self.cible.pos[1])
+    def move(self):
+        if self.target not in particles: self.target = particles[randint(0, len(particles)-1)]
+        self.target.color = self.color
+        coord = (self.pos[0]-self.target.pos[0], self.pos[1]-self.target.pos[1])
 
         x = coord[0]//abs(coord[0]) if coord[0] != 0 else 0
         y = coord[1]//abs(coord[1]) if coord[1] != 0 else 0
         self.pos = (self.pos[0] - x, self.pos[1] - y)
-        self.genereHitbox()
+        self.create_hitbox()
 
-    # verifie si une particule est dans sa hitbox pour la manger
-    def manger(self, bouffes):
-        for bouffe in bouffes:
-            if (self.hitboxPos[0] <= bouffe.pos[0] <= self.hitboxPos[0] + self.hitboxTaille and
-                self.hitboxPos[1] <= bouffe.pos[1] <= self.hitboxPos[1] + self.hitboxTaille and
-                self.taille > bouffe.taille and self != bouffe ):
+    def eat(self, foods):
+        for food in foods:
+            if (self.hitbox_pos[0] <= food.pos[0] <= self.hitbox_pos[0] + self.hitbox_size and
+                self.hitbox_pos[1] <= food.pos[1] <= self.hitbox_pos[1] + self.hitbox_size and
+                self.size > food.size and self != food ):
 
-                self.taille += bouffe.taille//2
-                if bouffe.taille >= 50: musique.jouerSon() # joue un cri de la victoire quand on vainc une proie
-                bouffes.remove(bouffe)
-                self.afficher()
+                self.size += food.size//2
+                if type(food) == Npc: pygame.mixer.music.play()
+                foods.remove(food)
+                self.show()
 
-            else: bouffe.afficher()
+            else: food.show()
 
-    # permet de voir si il peut manger le joueur
-    def mangerJoueur(self, joueur):
-        if (self.hitboxPos[0] <= joueur.pos[0]+joueur.taille//2 <= self.hitboxPos[0]+self.hitboxTaille and
-            self.hitboxPos[1] <= joueur.pos[1]+joueur.taille//2 <= self.hitboxPos[1]+self.hitboxTaille and
-            self.taille > joueur.taille//2):
+    def eat_player(self, joueur):
+        if (self.hitbox_pos[0] <= joueur.pos[0]+joueur.size//2 <= self.hitbox_pos[0]+self.hitbox_size and
+            self.hitbox_pos[1] <= joueur.pos[1]+joueur.size//2 <= self.hitbox_pos[1]+self.hitbox_size and
+            self.size > joueur.size//2):
 
-            self.taille += joueur.taille//2
-            joueur.taille = 0
-            musique.jouerSon()
+            self.size += joueur.size//2
+            joueur.size = 0
+            pygame.mixer.music.play()
             joueur.changerTailleImg()
 
-        else: joueur.afficher()
+        else: joueur.show()
 
-    # affiche les bots
-    def afficher(self):
-        self.genereHitbox()
-        pygame.draw.circle(fenetre, self.couleur, self.pos, self.taille)
+    def show(self):
+        self.create_hitbox()
+        pygame.draw.circle(window, self.color, self.pos, self.size)
 
 
-fond = Fond()
-joueur = Joueur()
-particules = [Particule() for _ in range(250)]
-ordinateurs = [Ordinateur() for _ in range(5)]
+background = Background()
+player = Player()
+particles = [Particle() for _ in range(250)]
+npcs = [Npc() for _ in range(5)]
 
-while True:
-    fond.afficher()
+isPlaying = True
+while isPlaying:
+    background.show()
     for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONUP: musique.jouerSon()
-        elif event.type == pygame.QUIT: pygame.quit()       # quitte la page avec la croix
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: pygame.quit()
+        if event.type == pygame.MOUSEBUTTONUP: pygame.mixer.music.play()
+        elif event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+            isPlaying = False
 
-    joueur.deplacer()
-    joueur.manger(particules)
-    joueur.manger(ordinateurs)
-    joueur.afficher()
-    #joueur.afficherHitbox()
+    player.move()
+    player.eat(particles)
+    player.eat(npcs)
+    player.show()
 
-    if len(particules) <= len(ordinateurs): particules.extend(Particule() for _ in range(5))
+    if len(particles) <= len(npcs): particles.extend(Particle() for _ in range(5))
 
-    allTaille = [joueur.taille//2]
-    for ordi in ordinateurs:
-        ordi.deplacer()
-        ordi.afficher()
-        ordi.manger(particules)
-        ordi.manger(ordinateurs)
-        ordi.mangerJoueur(joueur)
-        #ordi.afficherHitbox()
-        allTaille.append(ordi.taille)
+    sizes = [player.size//2]
+    for npc in npcs:
+        npc.move()
+        npc.show()
+        npc.eat(particles)
+        npc.eat(npcs)
+        npc.eat_player(player)
+        
+        sizes.append(npc.size)
 
-    if max(allTaille) > fenTaille[1]/4 and fond.zoom > 1: fond.dezoom(joueur, ordinateurs, particules)
+    if max(sizes) > window_size[1]/4 and background.zoom > 1: background.unzoom(player, npcs, particles)
 
     pygame.time.delay(7)
     pygame.display.flip()
