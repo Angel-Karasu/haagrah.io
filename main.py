@@ -156,13 +156,13 @@ player = Player()
 particles = [Particle() for _ in range(NB_PARTICLES)]
 npcs = [Npc() for _ in range(NB_NPCS)]
 
-isPlaying = True
-while isPlaying:
+is_running = True
+while is_running:
     background.show()
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONUP: pygame.mixer.music.play()
         elif event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-            isPlaying = False
+            is_running = False
 
     player.move()
     player.eat(particles)
