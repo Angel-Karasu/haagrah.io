@@ -1,3 +1,4 @@
+#!/bin/python
 import math, pygame 
 from pygame.locals import *
 from random import randint
