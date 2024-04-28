@@ -4,10 +4,10 @@ This is a simple project to parody Agar.io game.
     
 ## Installation
 
-Clone this repository and install all requirements packages
+Clone this repository, set the virtual environnement and install all requirements packages
 ```shell
-git clone https://github.com/Angel-Karasu/haagrah.io.git;
-cd haagrah.io;
+git clone https://github.com/Angel-Karasu/haagrah.io.git; cd haagrah.io;
+virtualenv venv; source venv/bin/activate;
 pip install -r requirements.txt;
 ```
 
